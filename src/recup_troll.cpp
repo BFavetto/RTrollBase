@@ -123,6 +123,12 @@ std::vector<std::string> recup_troll_str_vec(std::string filename) {
 
 List recup_troll(std::vector<std::string> str_vec) {
   
+  int idx_ligne = 0;
+  
+  std::vector<std::string> nom_var_ts;
+  std::vector<std::string> nom_var_coeff;
+  
+  
   
   List result  = List::create(Rcpp::Named("result") = 0) ;
 }
