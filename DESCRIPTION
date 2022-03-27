@@ -1,0 +1,13 @@
+Package: RTrollBase
+Type: Package
+Title: Reads Trolltxt data files
+Version: 0.1
+Date: 2022-03-26
+Author: Benjamin Favetto
+Maintainer: Benjamin Favetto <benjamin.favetto@gmail.com>
+Description: Read Troll old software data files when they are stored in text format
+License: GPL (>= 2)
+Imports: Rcpp (>= 1.0.7), stringr, zoo
+LinkingTo: Rcpp
+Encoding: UTF-8
+RoxygenNote: 7.1.2
