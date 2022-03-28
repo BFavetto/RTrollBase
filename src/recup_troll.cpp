@@ -121,12 +121,82 @@ std::vector<std::string> recup_troll_str_vec(std::string filename) {
 }
 
 
+// [[Rcpp::export]]
 List recup_troll(std::vector<std::string> str_vec) {
   
-  int idx_ligne = 0;
+  int idx_ligne = 0; // index de ligne (augmente avec \n)
+  int idx_elem = 0; // index d'élément (plusieurs éléments par ligne)
+  int n_elem = str_vec.size() ; // nombre d'éléments dans le tableau 
+  
+  int idx_obs = 0; // observations pour la variable en cours
+  int nobs_loc = 0;
   
   std::vector<std::string> nom_var_ts;
   std::vector<std::string> nom_var_coeff;
+  
+  std::string nom_var ; // nom de la variable courante
+  std::date_debut_loc ; // date début
+  
+  bool is_timeserie ;
+  
+  while (idx_elem < n_elem) {
+    
+    if (str_vec[idx_elem] == "\n" ) { // on passe une ligne
+      
+      idx_elem += 1;
+      
+      idx_ligne += 1; 
+      
+      
+      }
+    
+    else if (str_vec[idx_elem] == "NAME:") { // définition d'un nouvel élément
+      
+      if (idx_ligne > 0) { // pour gérer le début de fichier 
+        
+        // à compléter
+        
+        
+        
+        }
+      
+      nom_var = str_vec[idx_elem + 1];
+      
+      idx_elem +=2 ;
+      
+      }
+    
+    else if (str_vec[idx_elem] == "SPECS:") {
+      
+      date_debut_loc = str_vec[idx_elem + 2];
+
+      is_timeserie = (date_debut_loc != "NA"); // est ce qu'on a une série temp ou un coeff ? 
+
+      
+      if (is_timeserie) {
+        
+        nom_var_ts.push_back(nom_var); 
+        
+        
+        } 
+      else { // sinon c'est un coeff
+        
+        nom_var_coeff.push_back(nom_var); 
+        
+        }
+      
+      
+      nobs_loc = std::stoi(str_vec[idx_elem + 4]) ; // attention au cas où c'est un coeff
+      
+      }
+    
+    
+    else {
+      
+      
+      }
+    
+    }
   
   
   
