@@ -129,79 +129,107 @@ List recup_troll(std::vector<std::string> str_vec) {
   int n_elem = str_vec.size() ; // nombre d'éléments dans le tableau 
   
   int idx_obs = 0; // observations pour la variable en cours
-  int nobs_loc = 0;
+  int nobs_loc = 0; // nombre d'observations
+  int nb_comment = 0; // nombre de lignes de commentaires
   
   std::vector<std::string> nom_var_ts;
   std::vector<std::string> nom_var_coeff;
   
   std::string nom_var ; // nom de la variable courante
-  std::date_debut_loc ; // date début
+  std::string date_debut_loc ; // date début
+  
   
   bool is_timeserie ;
   
-  while (idx_elem < n_elem) {
+  while ((idx_elem < n_elem) ) {
+    
+    Rprintf("Element %i : %s \n",idx_elem,str_vec[idx_elem].c_str());
     
     if (str_vec[idx_elem] == "\n" ) { // on passe une ligne
       
-      idx_elem += 1;
-      
       idx_ligne += 1; 
+      idx_elem +=1 ;
+      continue; // on saute le reste des cas  
       
-      
-      }
+    }
     
     else if (str_vec[idx_elem] == "NAME:") { // définition d'un nouvel élément
-      
-      if (idx_ligne > 0) { // pour gérer le début de fichier 
-        
+
+      if (idx_ligne > 0) { // pour gérer le début de fichier
+
         // à compléter
-        
-        
-        
-        }
-      
-      nom_var = str_vec[idx_elem + 1];
-      
-      idx_elem +=2 ;
-      
+
+
+
       }
-    
+
+      nom_var = str_vec[idx_elem + 1]; // déclaration du nom de la variable courante
+      Rprintf("Element %i : %s \n",idx_elem+1,str_vec[idx_elem+1].c_str());
+      idx_elem +=2 ; // on passe deux cases
+      continue; // on saute le reste des cas
+
+    }
+
     else if (str_vec[idx_elem] == "SPECS:") {
-      
-      date_debut_loc = str_vec[idx_elem + 2];
 
-      is_timeserie = (date_debut_loc != "NA"); // est ce qu'on a une série temp ou un coeff ? 
+      date_debut_loc = str_vec[idx_elem + 2]; //
+      Rprintf("Element %i : %s \n",idx_elem + 2,str_vec[idx_elem+2].c_str());
+      is_timeserie = (date_debut_loc != "NA"); // est ce qu'on a une série temp ou un coeff ?
 
-      
-      if (is_timeserie) {
-        
-        nom_var_ts.push_back(nom_var); 
-        
-        
-        } 
+      if (is_timeserie) { // cas d'une série temp
+
+        nom_var_ts.push_back(nom_var); // on ajoute le nom à la liste
+
+      }
       else { // sinon c'est un coeff
-        
-        nom_var_coeff.push_back(nom_var); 
-        
-        }
-      
-      
+
+        nom_var_coeff.push_back(nom_var); // on ajoute le nom à la liste
+
+      }
+
+
       nobs_loc = std::stoi(str_vec[idx_elem + 4]) ; // attention au cas où c'est un coeff
+      Rprintf("Element %i : %s \n",idx_elem + 4 ,str_vec[idx_elem + 4].c_str());
       
+      nb_comment = std::stoi(str_vec[idx_elem + 6]); // nombre de ligne à sauter pour ne pas lire les commentaires
+      Rprintf("Element %i : %s \n",idx_elem + 6,str_vec[idx_elem + 6].c_str());
+
+      idx_elem += 7 ;  // on saute les six éléments qu'on vient de lire
+
+      int idx_ligne_temp = 0;
+      while (idx_ligne_temp < nb_comment +1) {
+
+        if (str_vec[idx_elem] == "\n" ) { // on passe une ligne
+
+          idx_ligne_temp += 1;
+          idx_ligne += 1;
+
+        }
+        Rprintf("Element %i : %s \n",idx_elem,str_vec[idx_elem].c_str());
+        idx_elem += 1; // on avance d'un élément
+
       }
-    
-    
-    else {
-      
-      
+      continue ; // on saute le reste des cas
+    }
+
+
+    else { // on est sur une ligne avec des valeurs
+
+      idx_elem += 1;
+
       }
-    
+
     }
   
+  Rprintf("Nombre de lignes : %i  \n",idx_ligne);
   
   
-  List result  = List::create(Rcpp::Named("result") = 0) ;
-}
+  List result  = List::create(Rcpp::Named("nom_var_ts") = nom_var_ts,
+                              Rcpp::Named("nom_var_coeff") = nom_var_coeff) ;
+  
+  return result ;
+
+  }
 
 
 

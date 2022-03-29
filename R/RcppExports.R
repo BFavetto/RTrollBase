@@ -9,3 +9,7 @@ recup_troll_str_vec <- function(filename) {
     .Call(`_RTrollBase_recup_troll_str_vec`, filename)
 }
 
+recup_troll <- function(str_vec) {
+    .Call(`_RTrollBase_recup_troll`, str_vec)
+}
+

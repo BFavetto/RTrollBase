@@ -32,10 +32,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// recup_troll
+List recup_troll(std::vector<std::string> str_vec);
+RcppExport SEXP _RTrollBase_recup_troll(SEXP str_vecSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type str_vec(str_vecSEXP);
+    rcpp_result_gen = Rcpp::wrap(recup_troll(str_vec));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_RTrollBase_str_split_cpp", (DL_FUNC) &_RTrollBase_str_split_cpp, 1},
     {"_RTrollBase_recup_troll_str_vec", (DL_FUNC) &_RTrollBase_recup_troll_str_vec, 1},
+    {"_RTrollBase_recup_troll", (DL_FUNC) &_RTrollBase_recup_troll, 1},
     {NULL, NULL, 0}
 };
 
