@@ -138,12 +138,17 @@ List recup_troll(std::vector<std::string> str_vec) {
   std::string nom_var ; // nom de la variable courante
   std::string date_debut_loc ; // date début
   
+  NumericVector df_loc ;
+  
+  // structures de données pour le résultat de la lecture
+  List listcoef = List::create(); // pour contenir les coefficients
+  List listts = List::create();
   
   bool is_timeserie ;
   
   while ((idx_elem < n_elem) ) {
     
-    Rprintf("Element %i : %s \n",idx_elem,str_vec[idx_elem].c_str());
+    // Rprintf("Element %i : %s \n",idx_elem,str_vec[idx_elem].c_str());
     
     if (str_vec[idx_elem] == "\n" ) { // on passe une ligne
       
@@ -157,23 +162,40 @@ List recup_troll(std::vector<std::string> str_vec) {
 
       if (idx_ligne > 0) { // pour gérer le début de fichier
 
-        // à compléter
+        if (is_timeserie) {
 
+                    // annee_trim <- stringr::str_split(date_debut_loc,"Q")
+                    // 
+                    // annee <- annee_trim[[1]][1]
+                    // trim <- annee_trim[[1]][2]
+                    // 
+                    // dfts <- cbind(dfts,ts(df_loc,
+                    //                       frequency = 4,
+                    //                       start = c(as.integer(annee),as.integer(trim))))
+          listts.push_back(df_loc, nom_var);
 
+        } else {
+          // on ajoute un coefficient
+          listcoef.push_back(df_loc, nom_var);
+          
+        }
 
       }
 
       nom_var = str_vec[idx_elem + 1]; // déclaration du nom de la variable courante
-      Rprintf("Element %i : %s \n",idx_elem+1,str_vec[idx_elem+1].c_str());
+      // Rprintf("Element %i : %s \n",idx_elem+1,str_vec[idx_elem+1].c_str());
       idx_elem +=2 ; // on passe deux cases
+      
       continue; // on saute le reste des cas
 
     }
 
     else if (str_vec[idx_elem] == "SPECS:") {
 
-      date_debut_loc = str_vec[idx_elem + 2]; //
-      Rprintf("Element %i : %s \n",idx_elem + 2,str_vec[idx_elem+2].c_str());
+      df_loc = NumericVector(0); // pour la lecture des valeurs numériques
+      date_debut_loc = str_vec[idx_elem + 2]; // pour la date de début de la série temp
+      // Rprintf("Element %i : %s \n",idx_elem + 2,str_vec[idx_elem+2].c_str());
+      
       is_timeserie = (date_debut_loc != "NA"); // est ce qu'on a une série temp ou un coeff ?
 
       if (is_timeserie) { // cas d'une série temp
@@ -189,10 +211,10 @@ List recup_troll(std::vector<std::string> str_vec) {
 
 
       nobs_loc = std::stoi(str_vec[idx_elem + 4]) ; // attention au cas où c'est un coeff
-      Rprintf("Element %i : %s \n",idx_elem + 4 ,str_vec[idx_elem + 4].c_str());
+      // Rprintf("Element %i : %s \n",idx_elem + 4 ,str_vec[idx_elem + 4].c_str());
       
       nb_comment = std::stoi(str_vec[idx_elem + 6]); // nombre de ligne à sauter pour ne pas lire les commentaires
-      Rprintf("Element %i : %s \n",idx_elem + 6,str_vec[idx_elem + 6].c_str());
+      // Rprintf("Element %i : %s \n",idx_elem + 6,str_vec[idx_elem + 6].c_str());
 
       idx_elem += 7 ;  // on saute les six éléments qu'on vient de lire
 
@@ -205,27 +227,57 @@ List recup_troll(std::vector<std::string> str_vec) {
           idx_ligne += 1;
 
         }
-        Rprintf("Element %i : %s \n",idx_elem,str_vec[idx_elem].c_str());
+        // Rprintf("Element %i : %s \n",idx_elem,str_vec[idx_elem].c_str());
         idx_elem += 1; // on avance d'un élément
 
       }
+      
       continue ; // on saute le reste des cas
     }
 
 
-    else { // on est sur une ligne avec des valeurs
-
+    else { // on est sur une  valeur
+      
+      if (strcmp(str_vec[idx_elem].c_str(),"NA") ==0 ) {
+        // cas d'un NA
+        df_loc.push_back(NA_REAL) ;
+        
+      } else {
+        
+        df_loc.push_back(std::stod(str_vec[idx_elem]));
+        
+      }
+      
+      
       idx_elem += 1;
 
       }
 
     }
   
+  if (is_timeserie) {
+    
+    // annee_trim <- stringr::str_split(date_debut_loc,"Q")
+    // 
+    // annee <- annee_trim[[1]][1]
+    // trim <- annee_trim[[1]][2]
+    // 
+    // dfts <- cbind(dfts,ts(df_loc,
+    //                       frequency = 4,
+    //                       start = c(as.integer(annee),as.integer(trim))))
+    
+    listts.push_back(df_loc,nom_var);
+  } else {
+    // on ajoute un coefficient
+    listcoef.push_back(df_loc, nom_var);
+    
+  }
+  
   Rprintf("Nombre de lignes : %i  \n",idx_ligne);
   
   
-  List result  = List::create(Rcpp::Named("nom_var_ts") = nom_var_ts,
-                              Rcpp::Named("nom_var_coeff") = nom_var_coeff) ;
+  List result  = List::create(Rcpp::Named("var_ts") = listts,
+                              Rcpp::Named("var_coeff") = Rcpp::DataFrame(listcoef)) ;
   
   return result ;
 
