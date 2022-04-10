@@ -10,6 +10,17 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// Qdate
+Date Qdate(std::string datestring);
+RcppExport SEXP _RTrollBase_Qdate(SEXP datestringSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type datestring(datestringSEXP);
+    rcpp_result_gen = Rcpp::wrap(Qdate(datestring));
+    return rcpp_result_gen;
+END_RCPP
+}
 // str_split_cpp
 std::vector<std::string> str_split_cpp(const std::string& s);
 RcppExport SEXP _RTrollBase_str_split_cpp(SEXP sSEXP) {
@@ -45,6 +56,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_RTrollBase_Qdate", (DL_FUNC) &_RTrollBase_Qdate, 1},
     {"_RTrollBase_str_split_cpp", (DL_FUNC) &_RTrollBase_str_split_cpp, 1},
     {"_RTrollBase_recup_troll_str_vec", (DL_FUNC) &_RTrollBase_recup_troll_str_vec, 1},
     {"_RTrollBase_recup_troll", (DL_FUNC) &_RTrollBase_recup_troll, 1},

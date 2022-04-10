@@ -10,6 +10,32 @@
 
 using namespace Rcpp;
 
+// [[Rcpp::export]]
+Date Qdate(std::string datestring) {
+  std::string year = datestring.substr(0, 4) ;
+  std::string quarter = datestring.substr(5,1);
+  
+  int yearint = std::stoi(year);
+  int monthint = 3*(std::stoi(quarter) -1) + 1;
+  
+  return Date(yearint,monthint,1);
+  
+}
+
+// [[Rcpp::export]]
+// DateVector Qdatevec(std::string datestring, int nbquarters) {
+//   
+//   std::string year = datestring.substr(0, 4) ;
+//   std::string quarter = datestring.substr(5,1);
+//   
+//   int yearint = std::stoi(year);
+//   int monthint = 3*(std::stoi(quarter) -1) + 1;
+//   
+//   return Date(yearint,monthint,1);
+//   
+//   
+// }
+
 //internal function to split at spaces or eol
 // [[Rcpp::export]]
 std::vector<std::string> str_split_cpp(const std::string &s) {
@@ -199,6 +225,8 @@ List recup_troll(std::vector<std::string> str_vec) {
       is_timeserie = (date_debut_loc != "NA"); // est ce qu'on a une série temp ou un coeff ?
 
       if (is_timeserie) { // cas d'une série temp
+        
+        
 
         nom_var_ts.push_back(nom_var); // on ajoute le nom à la liste
 
