@@ -360,16 +360,7 @@ List recup_troll(std::vector<std::string> str_vec) {
   
   if (is_timeserie) {
     
-    // annee_trim <- stringr::str_split(date_debut_loc,"Q")
-    // 
-    // annee <- annee_trim[[1]][1]
-    // trim <- annee_trim[[1]][2]
-    // 
-    // dfts <- cbind(dfts,ts(df_loc,
-    //                       frequency = 4,
-    //                       start = c(as.integer(annee),as.integer(trim))))
-    
-
+    // on ajoute une série temp
     
     listts.push_back(Rcpp::DataFrame(df_loc),nom_var);
   } else {
@@ -391,4 +382,10 @@ List recup_troll(std::vector<std::string> str_vec) {
 
 
 
-//     
+// [[Rcpp::export]]
+
+
+
+
+
+
