@@ -10,30 +10,106 @@
 
 using namespace Rcpp;
 
+//' Convert a date in format AAAAQQ in standard date format
+//'
+//' @param datestring a string containing the date in AAAAQQ format
+//' @return A Date object
 // [[Rcpp::export]]
 Date Qdate(std::string datestring) {
-  std::string year = datestring.substr(0, 4) ;
-  std::string quarter = datestring.substr(5,1);
+  std::string year = datestring.substr(0, 4) ; // récupère l'année
+  std::string quarter = datestring.substr(5,1); // récupère le trimestre
   
   int yearint = std::stoi(year);
   int monthint = 3*(std::stoi(quarter) -1) + 1;
   
-  return Date(yearint,monthint,1);
+  return Date(yearint,monthint,1); 
   
 }
 
+
+//' Add a quarter to a date (in format YYYY-MM-01 with MM in {01, 04, 07, 10})
+//'
+//' @param currentdate A date for the begining of a quarter
+//' @return A Date object
 // [[Rcpp::export]]
-// DateVector Qdatevec(std::string datestring, int nbquarters) {
-//   
+Date AddQuarter(Date currentdate) {
+  
+  
+  int currentyear = currentdate.getYear() ;
+  int currentmonth = currentdate.getMonth();
+  
+  if (currentmonth < 10) {
+    
+    return Date(currentyear, currentmonth + 3 , 1);
+    
+  } else { // cas du passage d'une année
+    
+    return Date(currentyear +1 , 1 , 1);
+    
+  }
+  
+  
+  
+}
+
+
+// [[Rcpp::export]]
+std::string AddQuarterStr(std::string datestring) {
+  
+  if (datestring == "NA") {
+    
+    return "NA";
+    
+  } else {
+    std::string year = datestring.substr(0, 4) ; // récupère l'année
+    std::string quarter = datestring.substr(5,1); // récupère le trimestre
+  
+  int yearint = std::stoi(year);
+  int quarterint = std::stoi(quarter);
+  
+  if (quarterint < 4) {
+    
+    quarterint += 1;
+    
+    
+  } else {
+    
+    quarterint = 1;
+    yearint +=1 ;
+    
+  }
+  
+  year = std::to_string(yearint);
+  quarter = std::to_string(quarterint);
+  
+  return year + "Q" + quarter;
+  
+  }
+  
+}
+
+
+// // [[Rcpp::export]]
+// std::vector<std::string> Qdatevec(std::string datestring, int nbquarters) {
+// 
 //   std::string year = datestring.substr(0, 4) ;
 //   std::string quarter = datestring.substr(5,1);
-//   
+// 
 //   int yearint = std::stoi(year);
-//   int monthint = 3*(std::stoi(quarter) -1) + 1;
+//   int monthint = 3*(std::stoi(quarter) -1) + 1; // définition du mois associé au début de trimestre
 //   
-//   return Date(yearint,monthint,1);
+//   std::vector<std::string> date_vect ;
 //   
 //   
+//   for(int i = 1 ; i < nbquarters ; ++i) {
+//     
+//     Date dtemp = date_vect[i-1];
+//     date_vect[i] = AddQuarter(dtemp) ;
+//   }
+// 
+//   return date_vect ;
+// 
+// 
 // }
 
 //internal function to split at spaces or eol
@@ -74,7 +150,11 @@ std::vector<std::string> str_split_cpp(const std::string &s) {
 }
 
 
-
+//' Read a Troll database in text format
+//' The file is split by space character
+//'
+//' @param filename A string containing the name of the file
+//' @return A vector of strings 
 // [[Rcpp::export]]
 std::vector<std::string> recup_troll_str_vec(std::string filename) {
 
@@ -84,13 +164,6 @@ std::vector<std::string> recup_troll_str_vec(std::string filename) {
   
   int n_lines ;
 
-
-  // pointeur sur le fichier
-  //  FILE *filepointer = fopen(filename.c_str(), "r");
-
-  //  if (filepointer == NULL) {
-  //    stop("error opening file");
-  //  }
 
   // début de la lecture du fichier
   Rprintf( "Recuperation de la base au format Troll : %s \n", fnam) ;
@@ -134,19 +207,18 @@ std::vector<std::string> recup_troll_str_vec(std::string filename) {
 
   //  fclose(filepointer);
   ifs.close() ;
-  
 
-  // for(int i = n_lines -20; i < n_lines; i++) {
-  //   
-  //   Rprintf( " %s \n", elements[i].c_str()) ;
-  //   
-  // }
 
 
   return elements;
 }
 
 
+//' Read a Troll database in text format
+//' The file is split by space character
+//'
+//' @param str_vec A vector of strings containing the data
+//' @return A List
 // [[Rcpp::export]]
 List recup_troll(std::vector<std::string> str_vec) {
   
@@ -158,13 +230,16 @@ List recup_troll(std::vector<std::string> str_vec) {
   int nobs_loc = 0; // nombre d'observations
   int nb_comment = 0; // nombre de lignes de commentaires
   
+  int nb_dates = 0; // nombre de trimestres à lire dans le cas d'une série temporelle
+  
   std::vector<std::string> nom_var_ts;
   std::vector<std::string> nom_var_coeff;
   
   std::string nom_var ; // nom de la variable courante
-  std::string date_debut_loc ; // date début
+  std::string date_loc ; // date courante
   
   NumericVector df_loc ;
+  // std::string date_temp ;
   
   // structures de données pour le résultat de la lecture
   List listcoef = List::create(); // pour contenir les coefficients
@@ -189,16 +264,8 @@ List recup_troll(std::vector<std::string> str_vec) {
       if (idx_ligne > 0) { // pour gérer le début de fichier
 
         if (is_timeserie) {
-
-                    // annee_trim <- stringr::str_split(date_debut_loc,"Q")
-                    // 
-                    // annee <- annee_trim[[1]][1]
-                    // trim <- annee_trim[[1]][2]
-                    // 
-                    // dfts <- cbind(dfts,ts(df_loc,
-                    //                       frequency = 4,
-                    //                       start = c(as.integer(annee),as.integer(trim))))
-          listts.push_back(df_loc, nom_var);
+            // on ajoute une série temp
+            listts.push_back(df_loc, nom_var);
 
         } else {
           // on ajoute un coefficient
@@ -219,20 +286,25 @@ List recup_troll(std::vector<std::string> str_vec) {
     else if (str_vec[idx_elem] == "SPECS:") {
 
       df_loc = NumericVector(0); // pour la lecture des valeurs numériques
-      date_debut_loc = str_vec[idx_elem + 2]; // pour la date de début de la série temp
+      date_loc = str_vec[idx_elem + 2]; // pour la date de début de la série temp
+      
       // Rprintf("Element %i : %s \n",idx_elem + 2,str_vec[idx_elem+2].c_str());
       
-      is_timeserie = (date_debut_loc != "NA"); // est ce qu'on a une série temp ou un coeff ?
+      is_timeserie = (date_loc != "NA"); // est ce qu'on a une série temp ou un coeff ?
 
       if (is_timeserie) { // cas d'une série temp
         
+        // nb_dates = std::stoi(str_vec[idx_elem + 4]); // on lit le nombre de dates
         
-
+        // date_temp = Qdate(date_debut_loc); // on instancie la première date
+        
+        
         nom_var_ts.push_back(nom_var); // on ajoute le nom à la liste
 
       }
       else { // sinon c'est un coeff
 
+        
         nom_var_coeff.push_back(nom_var); // on ajoute le nom à la liste
 
       }
@@ -268,16 +340,19 @@ List recup_troll(std::vector<std::string> str_vec) {
       
       if (strcmp(str_vec[idx_elem].c_str(),"NA") ==0 ) {
         // cas d'un NA
-        df_loc.push_back(NA_REAL) ;
+        df_loc.push_back(NA_REAL, date_loc) ;
+        
         
       } else {
         
-        df_loc.push_back(std::stod(str_vec[idx_elem]));
+        df_loc.push_back(std::stod(str_vec[idx_elem]), date_loc);
         
       }
       
       
       idx_elem += 1;
+      
+      date_loc = AddQuarterStr(date_loc) ;
 
       }
 
@@ -294,7 +369,9 @@ List recup_troll(std::vector<std::string> str_vec) {
     //                       frequency = 4,
     //                       start = c(as.integer(annee),as.integer(trim))))
     
-    listts.push_back(df_loc,nom_var);
+
+    
+    listts.push_back(Rcpp::DataFrame(df_loc),nom_var);
   } else {
     // on ajoute un coefficient
     listcoef.push_back(df_loc, nom_var);
@@ -314,154 +391,4 @@ List recup_troll(std::vector<std::string> str_vec) {
 
 
 
-// 
-// 
-// 
-// # on boucle sur les lignes
-// idx_ligne <- 1
-// 
-// liste_nom_var_ts <- NULL
-// liste_nom_var_coef <- NULL
-// 
-// # date_debut <- NULL
-// 
-// # nb_observ <- NULL
-// 
-// dfts <- c()
-//   
-//   dfcoef <- c()
-//   
-// # on traite ligne à ligne le fichier
-//   
-//   while(idx_ligne <= linestot) {
-//     
-//     ligne <- filesplit[[idx_ligne]] 
-//     
-//     
-//     
-//     if (ligne[1] == "NAME:") {
-//       
-//       if (idx_ligne > 1) {
-//         
-// # cat("Nombre d'observations :", idx_obs, "\n")
-//         
-//         if (is_timeserie) {
-//           
-//           annee_trim <- stringr::str_split(date_debut_loc,"Q")
-//           
-//           annee <- annee_trim[[1]][1]
-//           trim <- annee_trim[[1]][2]
-//           
-//           dfts <- cbind(dfts,ts(df_loc,
-//                                 frequency = 4,
-//                                 start = c(as.integer(annee),as.integer(trim))))
-//           
-//         } else {
-//           
-//           dfcoef <- cbind(dfcoef,df_loc)
-//         }
-//         
-//         
-//       }
-//       
-//       
-//       nom_var <- ligne[2]
-//       
-// # cat("Variable :",nom_var,"\n")
-//       
-//       
-//       idx_obs <- 1  # pour l'insertion à la bonne ligne
-//         
-//         nobs_loc <- 0
-//       df_loc <- c()
-//         
-//         idx_ligne <- idx_ligne +1
-//       
-//     } 
-//     else if (ligne[1] == "SPECS:") {
-//       
-//       type_donnee <- ligne[2]
-//       
-//       date_debut_loc <- ligne[3]
-//       
-//       is_timeserie <- ligne[3] != "NA"
-//       
-//       if (is_timeserie) {
-//         
-//         liste_nom_var_ts <- c(liste_nom_var_ts,nom_var)
-//         
-//       } else {
-//         
-//         liste_nom_var_coef <- c(liste_nom_var_coef,nom_var)
-//         
-//       }
-//       
-// # date_debut <- c(date_debut,date_debut_loc)
-//       
-//       nobs_loc <- as.numeric(ligne[5])
-//         
-// # nb_observ <- c(nb_observ, nobs_loc)
-//         
-//         df_loc <- rep(NA,nobs_loc)
-//           
-// # cat("Date début :", date_debut_loc,"\n")
-// # cat("Nombre de données :", nobs_loc,"\n" )
-//           
-//           nb_comment <- as.numeric(ligne[7]) # nombre de ligne à sauter pour ne pas lire les commentaires
-//             
-//             idx_ligne <- idx_ligne + 1 + nb_comment
-//             
-//     }
-//     
-//     else {
-// # on est sur une ligne avec des valeurs
-//       for (item in ligne) {
-//         
-//         if (nchar(item)>0) {
-//           
-//           if (item != "NA") {
-//             df_loc[idx_obs] <- as.numeric(item)
-//           } else {
-//             
-//             df_loc[idx_obs] <- NA
-//           }
-//           
-//           idx_obs <- idx_obs +1
-//           
-//         }
-//         
-//       }
-//       
-//       
-//       idx_ligne <- idx_ligne +1
-//     }
-//     
-//     
-//   }
-//   
-//   if (idx_ligne > 1) {
-//     
-// # cat("Nombre d'observations :", idx_obs, "\n")
-//     
-//     if (is_timeserie) {
-//       
-//       annee_trim <- stringr::str_split(date_debut_loc,"Q")
-//       
-//       annee <- annee_trim[[1]][1]
-//       trim <- annee_trim[[1]][2]
-//       
-//       dfts <- cbind(dfts,ts(df_loc,
-//                             frequency = 4,
-//                             start = c(as.integer(annee),as.integer(trim))))
-//       
-//     } else {
-//       
-//       dfcoef <- cbind(dfcoef,df_loc)
-//     }
-//     
-//     
-//   }
-//   
-//   colnames(dfts) <- liste_nom_var_ts
-//     colnames(dfcoef) <- liste_nom_var_coef
 //     

@@ -21,6 +21,28 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// AddQuarter
+Date AddQuarter(Date currentdate);
+RcppExport SEXP _RTrollBase_AddQuarter(SEXP currentdateSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Date >::type currentdate(currentdateSEXP);
+    rcpp_result_gen = Rcpp::wrap(AddQuarter(currentdate));
+    return rcpp_result_gen;
+END_RCPP
+}
+// AddQuarterStr
+std::string AddQuarterStr(std::string datestring);
+RcppExport SEXP _RTrollBase_AddQuarterStr(SEXP datestringSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type datestring(datestringSEXP);
+    rcpp_result_gen = Rcpp::wrap(AddQuarterStr(datestring));
+    return rcpp_result_gen;
+END_RCPP
+}
 // str_split_cpp
 std::vector<std::string> str_split_cpp(const std::string& s);
 RcppExport SEXP _RTrollBase_str_split_cpp(SEXP sSEXP) {
@@ -57,6 +79,8 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_RTrollBase_Qdate", (DL_FUNC) &_RTrollBase_Qdate, 1},
+    {"_RTrollBase_AddQuarter", (DL_FUNC) &_RTrollBase_AddQuarter, 1},
+    {"_RTrollBase_AddQuarterStr", (DL_FUNC) &_RTrollBase_AddQuarterStr, 1},
     {"_RTrollBase_str_split_cpp", (DL_FUNC) &_RTrollBase_str_split_cpp, 1},
     {"_RTrollBase_recup_troll_str_vec", (DL_FUNC) &_RTrollBase_recup_troll_str_vec, 1},
     {"_RTrollBase_recup_troll", (DL_FUNC) &_RTrollBase_recup_troll, 1},
