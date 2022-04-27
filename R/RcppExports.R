@@ -9,6 +9,14 @@ Qdate <- function(datestring) {
     .Call(`_RTrollBase_Qdate`, datestring)
 }
 
+#' Convert a date vector in format AAAAQQ in standard date format
+#'
+#' @param datevect a vector of strings containing the dates in AAAAQQ format
+#' @return A DateVector object
+Qdatevect <- function(datevect) {
+    .Call(`_RTrollBase_Qdatevect`, datevect)
+}
+
 #' Add a quarter to a date (in format YYYY-MM-01 with MM in {01, 04, 07, 10})
 #'
 #' @param currentdate A date for the begining of a quarter

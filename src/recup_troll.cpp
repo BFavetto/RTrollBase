@@ -26,6 +26,28 @@ Date Qdate(std::string datestring) {
   
 }
 
+//' Convert a date vector in format AAAAQQ in standard date format
+//'
+//' @param datevect a vector of strings containing the dates in AAAAQQ format
+//' @return A DateVector object
+// [[Rcpp::export]]
+std::vector<Date> Qdatevect(std::vector<std::string> datevect) {
+
+  int numitem = datevect.size();  
+  std::vector<Date> result ;
+  
+
+  
+  for (int i = 0; i < numitem ; i++) {
+    
+    Date temp = Qdate(datevect[i]);
+    result.push_back(temp);
+    
+  }
+  
+  return result ; 
+  
+}
 
 //' Add a quarter to a date (in format YYYY-MM-01 with MM in {01, 04, 07, 10})
 //'
