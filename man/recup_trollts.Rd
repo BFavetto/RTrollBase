@@ -7,10 +7,10 @@
 recup_trollts(filename)
 }
 \arguments{
-\item{filename}{nom du fichier .frm au format trolltxt (chaine de caractere)}
+\item{filename}{nom du fichier .frm au format trolltxt (chaine de caractere)#'}
 }
 \value{
-
+Une liste contenant les dataframes des coefficients et des séries temporelles.#'
 }
 \description{
 Fonction de lecture des bases de données issues de Troll

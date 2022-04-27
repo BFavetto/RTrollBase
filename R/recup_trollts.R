@@ -1,11 +1,9 @@
 #' Fonction de lecture des bases de données issues de Troll
 #'
-#' @param filename nom du fichier .frm au format trolltxt (chaine de caractere)
-#' 
+#' @param filename nom du fichier .frm au format trolltxt (chaine de caractere) 
 #' @import stringr, zoo
 #' 
-#' @return
-#' 
+#' @return Une liste contenant les dataframes des coefficients et des séries temporelles.
 #' @export
 #'
 #' @examples

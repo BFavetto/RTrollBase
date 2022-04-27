@@ -52,7 +52,10 @@ Date AddQuarter(Date currentdate) {
   
 }
 
-
+//' Add a quarter to a date (in format AAAAQQ)
+//'
+//' @param datestring A date (string)
+//' @return A string containing the new date
 // [[Rcpp::export]]
 std::string AddQuarterStr(std::string datestring) {
   
@@ -112,7 +115,10 @@ std::string AddQuarterStr(std::string datestring) {
 // 
 // }
 
-//internal function to split at spaces or eol
+//' function to split at spaces or eol (internal)
+//'
+//' @param s A string containing the whole file
+//' @return A vector of strings 
 // [[Rcpp::export]]
 std::vector<std::string> str_split_cpp(const std::string &s) {
 
@@ -158,9 +164,9 @@ std::vector<std::string> str_split_cpp(const std::string &s) {
 // [[Rcpp::export]]
 std::vector<std::string> recup_troll_str_vec(std::string filename) {
 
-  const char eol = '\n';
+  // const char eol = '\n';
 
-  const char* fnam = filename.c_str();
+  const char* fnam = filename.c_str(); // nom du fichier (chaine de caractères)
   
   int n_lines ;
 
@@ -175,17 +181,25 @@ std::vector<std::string> recup_troll_str_vec(std::string filename) {
   if (ifs){ // on a pu ouvrir le fichier en lecture
 
     std::string contents;
+    
+    std::string line;
+    
+    while (getline(ifs, line)) {
 
-    ifs.seekg(0, std::ios::end);
+      contents += line ;
+      contents += "\n" ;
+    }
 
-    contents.resize(ifs.tellg());
-
-    ifs.seekg(0, std::ios::beg);
-
-    ifs.read(&contents[0], contents.size());
-
-    // contents : une chaine de caractères unique contenant la totalité du fichier
-    Rprintf( "Taille du fichier : %i \n", contents.size()) ;
+    // ifs.seekg(0, std::ios::end);
+    // 
+    // contents.resize(ifs.tellg());
+    // 
+    // ifs.seekg(0, std::ios::beg);
+    // 
+    // ifs.read(&contents[0], contents.size());
+    // 
+    // // contents : une chaine de caractères unique contenant la totalité du fichier
+    // Rprintf( "Taille du fichier : %i \n", contents.size()) ;
 
     // on subdivise selon les espaces et les retours à la ligne
     elements = str_split_cpp(contents) ;
@@ -239,6 +253,7 @@ List recup_troll(std::vector<std::string> str_vec) {
   std::string date_loc ; // date courante
   
   NumericVector df_loc ;
+  StringVector df_loc_dates ; 
   // std::string date_temp ;
   
   // structures de données pour le résultat de la lecture
@@ -265,7 +280,11 @@ List recup_troll(std::vector<std::string> str_vec) {
 
         if (is_timeserie) {
             // on ajoute une série temp
-            listts.push_back(df_loc, nom_var);
+            DataFrame dftemp = DataFrame::create(Named("date") = df_loc_dates,
+                                                 Named(nom_var) = df_loc) ;
+          
+          //dftemp.attr("row.names") = df_loc_dates ;
+          listts.push_back(dftemp,nom_var);
 
         } else {
           // on ajoute un coefficient
@@ -286,6 +305,8 @@ List recup_troll(std::vector<std::string> str_vec) {
     else if (str_vec[idx_elem] == "SPECS:") {
 
       df_loc = NumericVector(0); // pour la lecture des valeurs numériques
+      df_loc_dates = StringVector(0);
+      
       date_loc = str_vec[idx_elem + 2]; // pour la date de début de la série temp
       
       // Rprintf("Element %i : %s \n",idx_elem + 2,str_vec[idx_elem+2].c_str());
@@ -340,15 +361,20 @@ List recup_troll(std::vector<std::string> str_vec) {
       
       if (strcmp(str_vec[idx_elem].c_str(),"NA") ==0 ) {
         // cas d'un NA
-        df_loc.push_back(NA_REAL, date_loc) ;
+        df_loc.push_back(NA_REAL) ;
         
         
       } else {
         
-        df_loc.push_back(std::stod(str_vec[idx_elem]), date_loc);
+        df_loc.push_back(std::stod(str_vec[idx_elem]));
         
       }
       
+      if (is_timeserie) {
+        // pour stocker les dates de la série temp
+        df_loc_dates.push_back(date_loc) ;
+        
+      }
       
       idx_elem += 1;
       
@@ -361,8 +387,11 @@ List recup_troll(std::vector<std::string> str_vec) {
   if (is_timeserie) {
     
     // on ajoute une série temp
+    DataFrame dftemp = DataFrame::create(Named("date") = df_loc_dates,
+                                         Named(nom_var) = df_loc) ;
     
-    listts.push_back(Rcpp::DataFrame(df_loc),nom_var);
+    //dftemp.attr("row.names") = df_loc_dates ;
+    listts.push_back(dftemp,nom_var);
   } else {
     // on ajoute un coefficient
     listcoef.push_back(df_loc, nom_var);
@@ -382,7 +411,7 @@ List recup_troll(std::vector<std::string> str_vec) {
 
 
 
-// [[Rcpp::export]]
+// // [[Rcpp::export]]
 
 
 

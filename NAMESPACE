@@ -1,6 +1,7 @@
 useDynLib(RTrollBase, .registration=TRUE)
 importFrom(Rcpp, evalCpp)
 exportPattern("^[[:alpha:]]+")
+export(recup_trollts)
 importFrom("stats", "ts")
 import(stringr)
 import(zoo)

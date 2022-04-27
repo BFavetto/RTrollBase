@@ -17,10 +17,18 @@ AddQuarter <- function(currentdate) {
     .Call(`_RTrollBase_AddQuarter`, currentdate)
 }
 
+#' Add a quarter to a date (in format AAAAQQ)
+#'
+#' @param datestring A date (string)
+#' @return A string containing the new date
 AddQuarterStr <- function(datestring) {
     .Call(`_RTrollBase_AddQuarterStr`, datestring)
 }
 
+#' function to split at spaces or eol (internal)
+#'
+#' @param s A string containing the whole file
+#' @return A vector of strings 
 str_split_cpp <- function(s) {
     .Call(`_RTrollBase_str_split_cpp`, s)
 }
