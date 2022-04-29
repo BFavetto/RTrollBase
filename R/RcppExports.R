@@ -59,3 +59,12 @@ recup_troll <- function(str_vec) {
     .Call(`_RTrollBase_recup_troll`, str_vec)
 }
 
+#' Merge two dataframes based on the date column 
+#'
+#' @param left a data.frame with a date column
+#' @param right a data.frame with a date column
+#' @return A data.frame
+dateMerge <- function(left, right) {
+    .Call(`_RTrollBase_dateMerge`, left, right)
+}
+
