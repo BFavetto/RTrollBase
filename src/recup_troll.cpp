@@ -230,7 +230,7 @@ std::vector<std::string> recup_troll_str_vec(std::string filename) {
     
     if (n_lines != 0) { // le tableau de chaines n'est pas dégénéré
 
-      Rprintf( "Nombre de lignes : %i \n", n_lines) ;
+      // Rprintf( "Nombre de lignes : %i \n", n_lines) ;
     }
 
 
@@ -249,6 +249,204 @@ std::vector<std::string> recup_troll_str_vec(std::string filename) {
   return elements;
 }
 
+
+//' Merge two dataframes based on the date column 
+//'
+//' @param left a data.frame with a date column
+//' @param right a data.frame with a date column
+//' @return A data.frame
+// [[Rcpp::export]]
+DataFrame dateMerge(DataFrame left, 
+                    DataFrame right) {
+  
+  if (left.containsElementNamed("date") && 
+      right.containsElementNamed("date")) {
+    
+    // voir les conversions de type (date / string) avant la fusion
+    
+    // dates de chaque dataframe
+    std::vector<Date> date_left = left["date"];
+    std::vector<Date> date_right = right["date"];
+    
+    int nmax_left = date_left.size() ;
+    int nmax_right = date_right.size();
+    
+    // détermination de la réunion des dates
+    if (nmax_left > 0 &&
+        nmax_right > 0) {
+      
+      Date datemin_left = date_left[0] ; // premiere date de la table de gauche
+      Date datemin_right = date_right[0] ; // première date de la table de droite
+      
+      // Rprintf("datemin_left : %s \n",datemin_left.format().c_str());
+      // Rprintf("datemin_right : %s \n",datemin_right.format().c_str());
+      
+      Date datemax_left = date_left[nmax_left -1] ; // dernière date de la table de gauche
+      Date datemax_right = date_right[nmax_right -1] ; // dernière date de la table de droite
+      
+      // Rprintf("datemax_left : %s \n",datemax_left.format().c_str());
+      // Rprintf("datemax_right : %s \n",datemax_right.format().c_str());
+      
+      Date datemin ;
+      Date datemax ;
+      
+      if (datemin_left < datemin_right) {
+        datemin = datemin_left ;
+      } else {
+        datemin= datemin_right ;
+      }
+      
+      // Rprintf("datemin : %s \n",datemin.format().c_str());
+      
+      if (datemax_left > datemax_right) {
+        datemax= datemax_left ;
+      } else {
+        datemax = datemax_right;
+      }
+      
+      // Rprintf("datemax : %s \n",datemax.format().c_str());
+      
+      std::vector<Date> datetemp;
+      
+      while (datemin <= datemax) {
+        datetemp.push_back(datemin) ;        
+        datemin = AddQuarter(datemin);
+      }
+      
+      int nbrows = datetemp.size() ; // nombre de dates dans la jointure
+      
+      // dataframe contenant la jointure par la date
+      DataFrame result = DataFrame::create(Named("date") = datetemp) ;
+      
+      // data.frame de gauche
+      CharacterVector colnames_left = left.names();
+      int ncol_left = left.ncol();
+      
+      for (int i=0 ; i < ncol_left ; i++) {
+        
+        std::string strtemp = std::string(colnames_left[i]);
+        NumericVector valuetemp = left[i];
+        
+        
+        
+        if (strtemp != "date") {
+          
+          // Rprintf("%s \n", strtemp.c_str());
+          // Rprintf("nb de dates dans la jointure: %i \n", nbrows);
+          
+          // réécrire les valeurs ici aux bonnes dates
+          
+          NumericVector tempnum (nbrows) ;
+          
+          int ileft = 0;
+          
+          for (int imerge = 0 ; imerge < nbrows ; imerge++) {
+            
+            if (datetemp[imerge] < date_left[0]) {
+              // trop tot
+              
+              // Rprintf("trop tot : %i \n", imerge);
+              tempnum[imerge] = NA_REAL ;
+              
+              continue ;
+              
+            } else if (datetemp[imerge] > date_left[nmax_left -1] ) {
+              // trop tard
+              
+              // Rprintf("trop tard : %i \n", imerge);
+              tempnum[imerge] =  NA_REAL;
+              
+              continue ;
+              
+            } else {
+              
+              // Rprintf(" %i <-> %i \n", imerge,ileft);
+              tempnum[imerge] = valuetemp[ileft];
+              
+              ileft += 1;
+              continue ;
+              
+            }
+            
+          }
+          
+          result.push_back(tempnum,strtemp.c_str()) ;
+          
+        }
+        
+      }
+      
+      // data.frame de droite
+      
+      CharacterVector colnames_right = right.names();
+      int ncol_right = right.ncol();
+      
+      for (int i=0 ; i < ncol_right ; i++) {
+        
+        std::string strtemp = std::string(colnames_right[i]);
+        NumericVector valuetemp = right[i];
+        
+        
+        
+        if (strtemp != "date") {
+          
+          // Rprintf("%s \n", strtemp.c_str());
+          // Rprintf("nb de dates dans la jointure: %i \n", nbrows);
+          
+          // réécrire les valeurs ici aux bonnes dates
+          
+          NumericVector tempnum (nbrows) ;
+          
+          int iright = 0;
+          
+          for (int imerge = 0 ; imerge < nbrows ; imerge++) {
+            
+            if (datetemp[imerge] < date_right[0]) {
+              // trop tot
+              
+              // Rprintf("trop tot : %i \n", imerge);
+              tempnum[imerge] = NA_REAL ;
+              
+              continue ;
+              
+            } else if (datetemp[imerge] > date_right[nmax_right -1] ) {
+              // trop tard
+              
+              // Rprintf("trop tard : %i \n", imerge);
+              tempnum[imerge] =  NA_REAL;
+              
+              continue ;
+              
+            } else {
+              
+              // Rprintf(" %i <-> %i \n", imerge,iright);
+              tempnum[imerge] = valuetemp[iright];
+              
+              iright += 1;
+              continue ;
+              
+            }
+            
+          }
+          
+          result.push_back(tempnum,strtemp.c_str()) ;
+          
+        }
+        
+      }
+      
+      return result ;
+      
+      
+    }
+    
+    stop("Invalid dataframe: no lines");  
+    
+  }
+  
+  stop("Invalid dataframe: no date column");  
+  
+}
 
 //' Read a Troll database in text format
 //' The file is split by space character
@@ -423,7 +621,7 @@ List recup_troll(std::vector<std::string> str_vec) {
     
   }
   
-  Rprintf("Nombre de lignes : %i  \n",idx_ligne);
+  // Rprintf("Nombre de lignes : %i  \n",idx_ligne);
   
   
   List result  = List::create(Rcpp::Named("var_ts") = listts,
@@ -433,203 +631,17 @@ List recup_troll(std::vector<std::string> str_vec) {
 
   }
 
+// A faire : convertir les différents data frames en un seul via datemerge
 
-//' Merge two dataframes based on the date column 
+//' Read a Troll database in text format
 //'
-//' @param left a data.frame with a date column
-//' @param right a data.frame with a date column
-//' @return A data.frame
+//' @param filename A vector of strings containing the data
+//' @return A List
 // [[Rcpp::export]]
-DataFrame dateMerge(DataFrame left, 
-                    DataFrame right) {
+List recup_troll_rcpp(std::string filename) {
   
-  if (left.containsElementNamed("date") && 
-      right.containsElementNamed("date")) {
-    
-    // voir les conversions de type (date / string) avant la fusion
-    
-    // dates de chaque dataframe
-    std::vector<Date> date_left = left["date"];
-    std::vector<Date> date_right = right["date"];
-    
-    int nmax_left = date_left.size() ;
-    int nmax_right = date_right.size();
-    
-    // détermination de la réunion des dates
-    if (nmax_left > 0 &&
-        nmax_right > 0) {
-      
-      Date datemin_left = date_left[0] ; // premiere date de la table de gauche
-      Date datemin_right = date_right[0] ; // première date de la table de droite
-      
-      // Rprintf("datemin_left : %s \n",datemin_left.format().c_str());
-      // Rprintf("datemin_right : %s \n",datemin_right.format().c_str());
-      
-      Date datemax_left = date_left[nmax_left -1] ; // dernière date de la table de gauche
-      Date datemax_right = date_right[nmax_right -1] ; // dernière date de la table de droite
-
-      // Rprintf("datemax_left : %s \n",datemax_left.format().c_str());
-      // Rprintf("datemax_right : %s \n",datemax_right.format().c_str());
-            
-      Date datemin ;
-      Date datemax ;
-      
-      if (datemin_left < datemin_right) {
-        datemin = datemin_left ;
-      } else {
-        datemin= datemin_right ;
-      }
-      
-      // Rprintf("datemin : %s \n",datemin.format().c_str());
-      
-      if (datemax_left > datemax_right) {
-        datemax= datemax_left ;
-      } else {
-        datemax = datemax_right;
-      }
-      
-      // Rprintf("datemax : %s \n",datemax.format().c_str());
-      
-      std::vector<Date> datetemp;
-      
-      while (datemin <= datemax) {
-        datetemp.push_back(datemin) ;        
-        datemin = AddQuarter(datemin);
-      }
-      
-      int nbrows = datetemp.size() ; // nombre de dates dans la jointure
-      
-      // dataframe contenant la jointure par la date
-      DataFrame result = DataFrame::create(Named("date") = datetemp) ;
-      
-      // data.frame de gauche
-      CharacterVector colnames_left = left.names();
-      int ncol_left = left.ncol();
-      
-      for (int i=0 ; i < ncol_left ; i++) {
-        
-        std::string strtemp = std::string(colnames_left[i]);
-        NumericVector valuetemp = left[i];
-        
-        
-        
-        if (strtemp != "date") {
-          
-          // Rprintf("%s \n", strtemp.c_str());
-          // Rprintf("nb de dates dans la jointure: %i \n", nbrows);
-          
-          // réécrire les valeurs ici aux bonnes dates
-          
-          NumericVector tempnum (nbrows) ;
-          
-          int ileft = 0;
-          
-          for (int imerge = 0 ; imerge < nbrows ; imerge++) {
-            
-            if (datetemp[imerge] < date_left[0]) {
-                // trop tot
-                
-                // Rprintf("trop tot : %i \n", imerge);
-                tempnum[imerge] = NA_REAL ;
-
-                continue ;
-                
-            } else if (datetemp[imerge] > date_left[nmax_left -1] ) {
-                // trop tard
-                
-                // Rprintf("trop tard : %i \n", imerge);
-                tempnum[imerge] =  NA_REAL;
-
-                continue ;
-              
-            } else {
-              
-              // Rprintf(" %i <-> %i \n", imerge,ileft);
-              tempnum[imerge] = valuetemp[ileft];
-              
-              ileft += 1;
-              continue ;
-              
-            }
-            
-          }
-          
-          result.push_back(tempnum,strtemp.c_str()) ;
-          
-        }
-        
-      }
-      
-      // data.frame de droite
-      
-      CharacterVector colnames_right = right.names();
-      int ncol_right = right.ncol();
-      
-      for (int i=0 ; i < ncol_right ; i++) {
-        
-        std::string strtemp = std::string(colnames_right[i]);
-        NumericVector valuetemp = right[i];
-        
-        
-        
-        if (strtemp != "date") {
-          
-          // Rprintf("%s \n", strtemp.c_str());
-          // Rprintf("nb de dates dans la jointure: %i \n", nbrows);
-          
-          // réécrire les valeurs ici aux bonnes dates
-          
-          NumericVector tempnum (nbrows) ;
-          
-          int iright = 0;
-          
-          for (int imerge = 0 ; imerge < nbrows ; imerge++) {
-            
-            if (datetemp[imerge] < date_right[0]) {
-              // trop tot
-              
-              // Rprintf("trop tot : %i \n", imerge);
-              tempnum[imerge] = NA_REAL ;
-              
-              continue ;
-              
-            } else if (datetemp[imerge] > date_right[nmax_right -1] ) {
-              // trop tard
-              
-              // Rprintf("trop tard : %i \n", imerge);
-              tempnum[imerge] =  NA_REAL;
-              
-              continue ;
-              
-            } else {
-              
-              // Rprintf(" %i <-> %i \n", imerge,iright);
-              tempnum[imerge] = valuetemp[iright];
-              
-              iright += 1;
-              continue ;
-              
-            }
-            
-          }
-          
-          result.push_back(tempnum,strtemp.c_str()) ;
-          
-        }
-        
-      }
-      
-      return result ;
-      
-      
-    }
-    
-    stop("Invalid dataframe: no lines");  
-    
-  }
-
-  stop("Invalid dataframe: no date column");  
-
+  return recup_troll(recup_troll_str_vec(filename));
+  
 }
 
 

@@ -76,17 +76,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// recup_troll
-List recup_troll(std::vector<std::string> str_vec);
-RcppExport SEXP _RTrollBase_recup_troll(SEXP str_vecSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type str_vec(str_vecSEXP);
-    rcpp_result_gen = Rcpp::wrap(recup_troll(str_vec));
-    return rcpp_result_gen;
-END_RCPP
-}
 // dateMerge
 DataFrame dateMerge(DataFrame left, DataFrame right);
 RcppExport SEXP _RTrollBase_dateMerge(SEXP leftSEXP, SEXP rightSEXP) {
@@ -99,6 +88,28 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// recup_troll
+List recup_troll(std::vector<std::string> str_vec);
+RcppExport SEXP _RTrollBase_recup_troll(SEXP str_vecSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type str_vec(str_vecSEXP);
+    rcpp_result_gen = Rcpp::wrap(recup_troll(str_vec));
+    return rcpp_result_gen;
+END_RCPP
+}
+// recup_troll_rcpp
+List recup_troll_rcpp(std::string filename);
+RcppExport SEXP _RTrollBase_recup_troll_rcpp(SEXP filenameSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type filename(filenameSEXP);
+    rcpp_result_gen = Rcpp::wrap(recup_troll_rcpp(filename));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_RTrollBase_Qdate", (DL_FUNC) &_RTrollBase_Qdate, 1},
@@ -107,8 +118,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_RTrollBase_AddQuarterStr", (DL_FUNC) &_RTrollBase_AddQuarterStr, 1},
     {"_RTrollBase_str_split_cpp", (DL_FUNC) &_RTrollBase_str_split_cpp, 1},
     {"_RTrollBase_recup_troll_str_vec", (DL_FUNC) &_RTrollBase_recup_troll_str_vec, 1},
-    {"_RTrollBase_recup_troll", (DL_FUNC) &_RTrollBase_recup_troll, 1},
     {"_RTrollBase_dateMerge", (DL_FUNC) &_RTrollBase_dateMerge, 2},
+    {"_RTrollBase_recup_troll", (DL_FUNC) &_RTrollBase_recup_troll, 1},
+    {"_RTrollBase_recup_troll_rcpp", (DL_FUNC) &_RTrollBase_recup_troll_rcpp, 1},
     {NULL, NULL, 0}
 };
 

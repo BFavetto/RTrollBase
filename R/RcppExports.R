@@ -50,6 +50,15 @@ recup_troll_str_vec <- function(filename) {
     .Call(`_RTrollBase_recup_troll_str_vec`, filename)
 }
 
+#' Merge two dataframes based on the date column 
+#'
+#' @param left a data.frame with a date column
+#' @param right a data.frame with a date column
+#' @return A data.frame
+dateMerge <- function(left, right) {
+    .Call(`_RTrollBase_dateMerge`, left, right)
+}
+
 #' Read a Troll database in text format
 #' The file is split by space character
 #'
@@ -59,12 +68,11 @@ recup_troll <- function(str_vec) {
     .Call(`_RTrollBase_recup_troll`, str_vec)
 }
 
-#' Merge two dataframes based on the date column 
+#' Read a Troll database in text format
 #'
-#' @param left a data.frame with a date column
-#' @param right a data.frame with a date column
-#' @return A data.frame
-dateMerge <- function(left, right) {
-    .Call(`_RTrollBase_dateMerge`, left, right)
+#' @param filename A vector of strings containing the data
+#' @return A List
+recup_troll_rcpp <- function(filename) {
+    .Call(`_RTrollBase_recup_troll_rcpp`, filename)
 }
 
