@@ -262,11 +262,11 @@ List recup_troll(std::vector<std::string> str_vec) {
   int idx_elem = 0; // index d'élément (plusieurs éléments par ligne)
   int n_elem = str_vec.size() ; // nombre d'éléments dans le tableau 
   
-  int idx_obs = 0; // observations pour la variable en cours
+  // int idx_obs = 0; // observations pour la variable en cours
   int nobs_loc = 0; // nombre d'observations
   int nb_comment = 0; // nombre de lignes de commentaires
   
-  int nb_dates = 0; // nombre de trimestres à lire dans le cas d'une série temporelle
+  // int nb_dates = 0; // nombre de trimestres à lire dans le cas d'une série temporelle
   
   std::vector<std::string> nom_var_ts;
   std::vector<std::string> nom_var_coeff;
@@ -274,8 +274,8 @@ List recup_troll(std::vector<std::string> str_vec) {
   std::string nom_var ; // nom de la variable courante
   std::string date_loc ; // date courante
   
-  NumericVector df_loc ;
-  StringVector df_loc_dates ; 
+  NumericVector df_loc(0) ;
+  std::vector<Date> df_loc_dates(0) ; // pour le vecteur des dates courantes
   // std::string date_temp ;
   
   // structures de données pour le résultat de la lecture
@@ -302,9 +302,10 @@ List recup_troll(std::vector<std::string> str_vec) {
 
         if (is_timeserie) {
             // on ajoute une série temp
+            // DataFrame dftemp = DataFrame::create(Named("date") = df_loc_dates,
             DataFrame dftemp = DataFrame::create(Named("date") = df_loc_dates,
                                                  Named(nom_var) = df_loc) ;
-          
+
           //dftemp.attr("row.names") = df_loc_dates ;
           listts.push_back(dftemp,nom_var);
 
@@ -326,8 +327,9 @@ List recup_troll(std::vector<std::string> str_vec) {
 
     else if (str_vec[idx_elem] == "SPECS:") {
 
+      // remise à zéro des variables locales
       df_loc = NumericVector(0); // pour la lecture des valeurs numériques
-      df_loc_dates = StringVector(0);
+      df_loc_dates.resize(0) ; // pour la lecture des dates
       
       date_loc = str_vec[idx_elem + 2]; // pour la date de début de la série temp
       
@@ -394,7 +396,7 @@ List recup_troll(std::vector<std::string> str_vec) {
       
       if (is_timeserie) {
         // pour stocker les dates de la série temp
-        df_loc_dates.push_back(date_loc) ;
+        df_loc_dates.push_back(Qdate(date_loc)) ;
         
       }
       
@@ -409,6 +411,7 @@ List recup_troll(std::vector<std::string> str_vec) {
   if (is_timeserie) {
     
     // on ajoute une série temp
+    // DataFrame dftemp = DataFrame::create(Named("date") = df_loc_dates,
     DataFrame dftemp = DataFrame::create(Named("date") = df_loc_dates,
                                          Named(nom_var) = df_loc) ;
     
@@ -446,24 +449,24 @@ DataFrame dateMerge(DataFrame left,
     // voir les conversions de type (date / string) avant la fusion
     
     // dates de chaque dataframe
-    StringVector date_left = left["date"];
-    StringVector date_right = right["date"];
+    std::vector<Date> date_left = left["date"];
+    std::vector<Date> date_right = right["date"];
     
-    int nmax_left = date_left.length() ;
-    int nmax_right = date_right.length();
+    int nmax_left = date_left.size() ;
+    int nmax_right = date_right.size();
     
     // détermination de la réunion des dates
     if (nmax_left > 0 &&
         nmax_right > 0) {
       
-      Date datemin_left = Qdate(as<std::string>(date_left[0])); // premiere date de la table de gauche
-      Date datemin_right = Qdate(as<std::string>(date_right[0])); // première date de la table de droite
+      Date datemin_left = date_left[0] ; // premiere date de la table de gauche
+      Date datemin_right = date_right[0] ; // première date de la table de droite
       
       // Rprintf("datemin_left : %s \n",datemin_left.format().c_str());
       // Rprintf("datemin_right : %s \n",datemin_right.format().c_str());
       
-      Date datemax_left = Qdate(as<std::string>(date_left[nmax_left -1])); // dernière date de la table de gauche
-      Date datemax_right = Qdate(as<std::string>(date_right[nmax_right -1])); // dernière date de la table de droite
+      Date datemax_left = date_left[nmax_left -1] ; // dernière date de la table de gauche
+      Date datemax_right = date_right[nmax_right -1] ; // dernière date de la table de droite
 
       // Rprintf("datemax_left : %s \n",datemax_left.format().c_str());
       // Rprintf("datemax_right : %s \n",datemax_right.format().c_str());
@@ -477,7 +480,7 @@ DataFrame dateMerge(DataFrame left,
         datemin= datemin_right ;
       }
       
-      Rprintf("datemin : %s \n",datemin.format().c_str());
+      // Rprintf("datemin : %s \n",datemin.format().c_str());
       
       if (datemax_left > datemax_right) {
         datemax= datemax_left ;
@@ -485,7 +488,7 @@ DataFrame dateMerge(DataFrame left,
         datemax = datemax_right;
       }
       
-      Rprintf("datemax : %s \n",datemax.format().c_str());
+      // Rprintf("datemax : %s \n",datemax.format().c_str());
       
       std::vector<Date> datetemp;
       
@@ -494,21 +497,123 @@ DataFrame dateMerge(DataFrame left,
         datemin = AddQuarter(datemin);
       }
       
+      int nbrows = datetemp.size() ; // nombre de dates dans la jointure
+      
       // dataframe contenant la jointure par la date
       DataFrame result = DataFrame::create(Named("date") = datetemp) ;
       
+      // data.frame de gauche
       CharacterVector colnames_left = left.names();
       int ncol_left = left.ncol();
       
       for (int i=0 ; i < ncol_left ; i++) {
         
         std::string strtemp = std::string(colnames_left[i]);
+        NumericVector valuetemp = left[i];
         
-        Rprintf("%s \n", strtemp.c_str());
+        
         
         if (strtemp != "date") {
           
+          // Rprintf("%s \n", strtemp.c_str());
+          // Rprintf("nb de dates dans la jointure: %i \n", nbrows);
+          
           // réécrire les valeurs ici aux bonnes dates
+          
+          NumericVector tempnum (nbrows) ;
+          
+          int ileft = 0;
+          
+          for (int imerge = 0 ; imerge < nbrows ; imerge++) {
+            
+            if (datetemp[imerge] < date_left[0]) {
+                // trop tot
+                
+                // Rprintf("trop tot : %i \n", imerge);
+                tempnum[imerge] = NA_REAL ;
+
+                continue ;
+                
+            } else if (datetemp[imerge] > date_left[nmax_left -1] ) {
+                // trop tard
+                
+                // Rprintf("trop tard : %i \n", imerge);
+                tempnum[imerge] =  NA_REAL;
+
+                continue ;
+              
+            } else {
+              
+              // Rprintf(" %i <-> %i \n", imerge,ileft);
+              tempnum[imerge] = valuetemp[ileft];
+              
+              ileft += 1;
+              continue ;
+              
+            }
+            
+          }
+          
+          result.push_back(tempnum,strtemp.c_str()) ;
+          
+        }
+        
+      }
+      
+      // data.frame de droite
+      
+      CharacterVector colnames_right = right.names();
+      int ncol_right = right.ncol();
+      
+      for (int i=0 ; i < ncol_right ; i++) {
+        
+        std::string strtemp = std::string(colnames_right[i]);
+        NumericVector valuetemp = right[i];
+        
+        
+        
+        if (strtemp != "date") {
+          
+          // Rprintf("%s \n", strtemp.c_str());
+          // Rprintf("nb de dates dans la jointure: %i \n", nbrows);
+          
+          // réécrire les valeurs ici aux bonnes dates
+          
+          NumericVector tempnum (nbrows) ;
+          
+          int iright = 0;
+          
+          for (int imerge = 0 ; imerge < nbrows ; imerge++) {
+            
+            if (datetemp[imerge] < date_right[0]) {
+              // trop tot
+              
+              // Rprintf("trop tot : %i \n", imerge);
+              tempnum[imerge] = NA_REAL ;
+              
+              continue ;
+              
+            } else if (datetemp[imerge] > date_right[nmax_right -1] ) {
+              // trop tard
+              
+              // Rprintf("trop tard : %i \n", imerge);
+              tempnum[imerge] =  NA_REAL;
+              
+              continue ;
+              
+            } else {
+              
+              // Rprintf(" %i <-> %i \n", imerge,iright);
+              tempnum[imerge] = valuetemp[iright];
+              
+              iright += 1;
+              continue ;
+              
+            }
+            
+          }
+          
+          result.push_back(tempnum,strtemp.c_str()) ;
           
         }
         
