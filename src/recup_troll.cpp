@@ -376,7 +376,7 @@ DataFrame dateMerge(DataFrame left,
         
       }
       
-      // data.frame de droite
+      // data.frame de droite (à faire : contrôler que ce ne sont pas les mêmes noms)
       
       CharacterVector colnames_right = right.names();
       int ncol_right = right.ncol();
@@ -448,6 +448,44 @@ DataFrame dateMerge(DataFrame left,
   
 }
 
+//' Minimum of two dates
+//'
+//' @param date1 a Date
+//' @param date2 a Date
+//' @return min(date1, date2)
+// [[Rcpp::export]]
+Date minimum_date (Date date1 , Date date2) {
+  
+  if (date1 < date2) {
+    
+    return date1 ;
+    
+  } else {
+    
+    return date2 ;
+  }
+  
+} 
+
+//' Maximum of two dates
+//'
+//' @param date1 a Date
+//' @param date2 a Date
+//' @return max(date1, date2)
+// [[Rcpp::export]]
+Date maximum_date (Date date1 , Date date2) {
+  
+  if (date1 > date2) {
+    
+    return date1 ;
+    
+  } else {
+    
+    return date2 ;
+  }
+  
+} 
+
 //' Read a Troll database in text format
 //' The file is split by space character
 //'
@@ -466,7 +504,8 @@ List recup_troll(std::vector<std::string> str_vec) {
   
   // int nb_dates = 0; // nombre de trimestres à lire dans le cas d'une série temporelle
   
-  std::vector<std::string> nom_var_ts;
+  // std::vector<std::string> nom_var_ts;
+  CharacterVector nom_var_ts ;
   std::vector<std::string> nom_var_coeff;
   
   std::string nom_var ; // nom de la variable courante
@@ -481,6 +520,9 @@ List recup_troll(std::vector<std::string> str_vec) {
   List listts = List::create();
   
   bool is_timeserie ;
+  
+  Date mindate("2300-01-01") ; // attention : peu robuste
+  Date maxdate("1970-01-01") ;
   
   while ((idx_elem < n_elem) ) {
     
@@ -499,6 +541,9 @@ List recup_troll(std::vector<std::string> str_vec) {
       if (idx_ligne > 0) { // pour gérer le début de fichier
 
         if (is_timeserie) {
+          
+          mindate = minimum_date(mindate,df_loc_dates[0]) ;
+          maxdate = maximum_date(maxdate,df_loc_dates[df_loc_dates.size()-1]) ;
             // on ajoute une série temp
             // DataFrame dftemp = DataFrame::create(Named("date") = df_loc_dates,
             DataFrame dftemp = DataFrame::create(Named("date") = df_loc_dates,
@@ -608,6 +653,8 @@ List recup_troll(std::vector<std::string> str_vec) {
   
   if (is_timeserie) {
     
+    mindate = minimum_date(mindate,df_loc_dates[0]) ;
+    maxdate = maximum_date(maxdate,df_loc_dates[df_loc_dates.size()-1]) ;
     // on ajoute une série temp
     // DataFrame dftemp = DataFrame::create(Named("date") = df_loc_dates,
     DataFrame dftemp = DataFrame::create(Named("date") = df_loc_dates,
@@ -615,6 +662,9 @@ List recup_troll(std::vector<std::string> str_vec) {
     
     //dftemp.attr("row.names") = df_loc_dates ;
     listts.push_back(dftemp,nom_var);
+    
+    
+    
   } else {
     // on ajoute un coefficient
     listcoef.push_back(df_loc, nom_var);
@@ -623,8 +673,80 @@ List recup_troll(std::vector<std::string> str_vec) {
   
   // Rprintf("Nombre de lignes : %i  \n",idx_ligne);
   
+  int nbseries = listts.length() ;
+
   
-  List result  = List::create(Rcpp::Named("var_ts") = listts,
+  Rprintf("mindate : %s \n", mindate.format().c_str()) ;
+  Rprintf("maxdate : %s \n", maxdate.format().c_str()) ;
+  
+  // int diffdate = maxdate - mindate ;
+  // Rprintf("diffdate : %i \n", diffdate);
+  
+  std::vector<Date> fulldatetemp; // pour l'ensemble des dates
+  
+  Date iterdate = mindate ;
+  
+  while (iterdate <= maxdate ) {
+    fulldatetemp.push_back(iterdate) ;        
+    iterdate = AddQuarter(iterdate);
+  }
+  
+  int nbquarters = fulldatetemp.size() ; // nombre de dates dans la jointure
+  
+  NumericMatrix matrixts(nbquarters , nbseries);
+  
+  colnames(matrixts) = nom_var_ts ;
+
+  for (int j = 0 ; j < nbseries ; j++) {
+    
+    List tempdata = listts[j] ;
+    
+    std::vector<Date> datetempdata = tempdata["date"];
+    NumericVector valuetempdata = tempdata[1];
+    int nmax_right = datetempdata.size()  ; 
+      
+      int iright = 0;
+      
+      for (int imerge = 0 ; imerge < nbquarters ; imerge++) {
+        
+        if (fulldatetemp[imerge] < datetempdata[0]) {
+          // trop tot
+          
+          // Rprintf("trop tot : %i \n", imerge);
+          matrixts(imerge, j) = NA_REAL ;
+          
+          continue ;
+          
+        } else if (fulldatetemp[imerge] > datetempdata[nmax_right -1] ) {
+          // trop tard
+          
+          // Rprintf("trop tard : %i \n", imerge);
+          matrixts(imerge, j) =  NA_REAL;
+          
+          continue ;
+          
+        } else {
+          
+          // Rprintf(" %i <-> %i \n", imerge,iright);
+          matrixts(imerge, j) = valuetempdata[iright];
+          
+          iright += 1;
+          continue ;
+          
+        }
+        
+      }
+      
+    
+    
+  }
+  
+  // dataframe contenant la jointure par la date
+  // DataFrame result = DataFrame::create(Named("date") = datetemp) ;
+  
+  
+  List result  = List::create(Rcpp::Named("var_ts") = Rcpp::DataFrame(matrixts),
+                              Rcpp::Named("date_ts") = fulldatetemp ,
                               Rcpp::Named("var_coeff") = Rcpp::DataFrame(listcoef)) ;
   
   return result ;

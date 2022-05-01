@@ -59,6 +59,24 @@ dateMerge <- function(left, right) {
     .Call(`_RTrollBase_dateMerge`, left, right)
 }
 
+#' Minimum of two dates
+#'
+#' @param date1 a Date
+#' @param date2 a Date
+#' @return min(date1, date2)
+minimum_date <- function(date1, date2) {
+    .Call(`_RTrollBase_minimum_date`, date1, date2)
+}
+
+#' Maximum of two dates
+#'
+#' @param date1 a Date
+#' @param date2 a Date
+#' @return max(date1, date2)
+maximum_date <- function(date1, date2) {
+    .Call(`_RTrollBase_maximum_date`, date1, date2)
+}
+
 #' Read a Troll database in text format
 #' The file is split by space character
 #'

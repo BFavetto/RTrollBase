@@ -88,6 +88,30 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// minimum_date
+Date minimum_date(Date date1, Date date2);
+RcppExport SEXP _RTrollBase_minimum_date(SEXP date1SEXP, SEXP date2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Date >::type date1(date1SEXP);
+    Rcpp::traits::input_parameter< Date >::type date2(date2SEXP);
+    rcpp_result_gen = Rcpp::wrap(minimum_date(date1, date2));
+    return rcpp_result_gen;
+END_RCPP
+}
+// maximum_date
+Date maximum_date(Date date1, Date date2);
+RcppExport SEXP _RTrollBase_maximum_date(SEXP date1SEXP, SEXP date2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Date >::type date1(date1SEXP);
+    Rcpp::traits::input_parameter< Date >::type date2(date2SEXP);
+    rcpp_result_gen = Rcpp::wrap(maximum_date(date1, date2));
+    return rcpp_result_gen;
+END_RCPP
+}
 // recup_troll
 List recup_troll(std::vector<std::string> str_vec);
 RcppExport SEXP _RTrollBase_recup_troll(SEXP str_vecSEXP) {
@@ -119,6 +143,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_RTrollBase_str_split_cpp", (DL_FUNC) &_RTrollBase_str_split_cpp, 1},
     {"_RTrollBase_recup_troll_str_vec", (DL_FUNC) &_RTrollBase_recup_troll_str_vec, 1},
     {"_RTrollBase_dateMerge", (DL_FUNC) &_RTrollBase_dateMerge, 2},
+    {"_RTrollBase_minimum_date", (DL_FUNC) &_RTrollBase_minimum_date, 2},
+    {"_RTrollBase_maximum_date", (DL_FUNC) &_RTrollBase_maximum_date, 2},
     {"_RTrollBase_recup_troll", (DL_FUNC) &_RTrollBase_recup_troll, 1},
     {"_RTrollBase_recup_troll_rcpp", (DL_FUNC) &_RTrollBase_recup_troll_rcpp, 1},
     {NULL, NULL, 0}
